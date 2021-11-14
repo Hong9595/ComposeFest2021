@@ -12,6 +12,8 @@ import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,19 +43,28 @@ private fun MyApp(names:List<String> = listOf("World", "Compose")) {
 
 @Composable
 fun Greeting(name: String) {
+    // mutableStateOf를 사용해 Recomposition을 할 수 있게 추적.
+    // Composable은 Recomposition은 언제든지 호출될 수 있기에, 그때마다 초기화가 아닌 기존 값을 유지하기 위해 remember 사용.
+    //  - 각 Composable마다 지역변수 개념으로 가지게 된다는 걸 기억하자.
+    val expanded = remember { mutableStateOf(false) }
+
+    val extraPadding = if (expanded.value) 48.dp else 0.dp
     Surface(
         color = MaterialTheme.colors.primary,
         modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)
     ) {
         Row(modifier = Modifier.padding(24.dp)) {
-            Column(modifier = Modifier.weight(1f)) {
+            Column(modifier = Modifier
+                .weight(1f)
+                .padding(bottom = extraPadding)
+            ) {
                 Text(text = "Hello,")
                 Text(text = name)
             }
             OutlinedButton(
-                onClick = { /*TODO*/ }
+                onClick = { expanded.value = !expanded.value }
             ) {
-                Text("Show More")
+                Text(if (expanded.value) "Show less" else "Show more")
             }
         }
     }
