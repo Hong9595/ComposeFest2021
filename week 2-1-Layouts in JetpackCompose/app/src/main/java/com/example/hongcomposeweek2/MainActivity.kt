@@ -25,6 +25,9 @@ import androidx.compose.ui.layout.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
+import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.ConstraintSet
+import androidx.constraintlayout.compose.Dimension
 import coil.compose.rememberImagePainter
 import com.example.hongcomposeweek2.ui.theme.HongComposeWeek2Theme
 import kotlinx.coroutines.launch
@@ -41,9 +44,103 @@ class MainActivity : ComponentActivity() {
 //                    ScrollingList()
 //                    Text("Hi there!", Modifier.firstBaselineToTop(32.dp))
 //                    BodyContentForMyOwnColumn()
-                    BodyContent3()
+//                    BodyContent3()
+//                    ConstraintLayoutContent()
+                    LargeConstraintLayout()
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun DecoupledConstraintLayout() {
+    BoxWithConstraints {
+        // 기존에는 LargeConstraintLayout()에서 보듯이, constraints를 inline 해서 정의했다.
+        // 그러나, constraint가 동적으로 바뀌어야 하는 경우가 있다면?
+        //   - ex) 화면 방향 전환에 따라 constraint를 다르게 줘야 하는 경우
+        //     - 아래처럼 ConstraintSet을 이용해서 decoupled 시키면 된다.
+        val constraints = if (maxWidth < maxHeight) {
+            decoupledConstraints(margin = 16.dp)
+        } else {
+            decoupledConstraints(margin = 32.dp)
+        }
+
+        ConstraintLayout(constraints) {
+            Button(
+                onClick = {},
+                modifier = Modifier.layoutId("button")
+            ) {
+                Text("Button")
+            }
+
+            Text("Text", Modifier.layoutId("text"))
+        }
+    }
+}
+
+private fun decoupledConstraints(margin: Dp): ConstraintSet {
+    return ConstraintSet {
+        val button = createRefFor("button")
+        val text = createRefFor("text")
+
+        constrain(button) {
+            top.linkTo(parent.top, margin= margin)
+        }
+        constrain(text) {
+            top.linkTo(button.bottom, margin)
+        }
+    }
+}
+
+@Composable
+fun LargeConstraintLayout() {
+    ConstraintLayout {
+        val text = createRef()
+
+        val guideline = createGuidelineFromStart(0.5f)
+        Text(
+            "This is a very very very very very very very long text",
+            Modifier.constrainAs(text) {
+                linkTo(guideline, parent.end)
+                // preferredWrapContent: the layout is wrap content, subject to the constraints in that dimension.
+                //  - 제한된 범위 내에서 wrap_content // 화면 밖을 벗어나지 않는다
+                // wrapContent: the layout is wrap content even if the constraints would not allow it.
+                //  - 범위 밖으로 wrap_content // 화면을 벗어난다.
+                width = Dimension.preferredWrapContent
+            }
+        )
+    }
+}
+
+@Composable
+fun ConstraintLayoutContent() {
+    ConstraintLayout {
+        val (button1, button2, text) = createRefs()
+
+        Button(
+            onClick = { /* Do something */ },
+            modifier = Modifier.constrainAs(button1) {
+                top.linkTo(parent.top, margin = 16.dp)
+            }
+        ) {
+            Text("Button 1")
+        }
+
+        Text("Text", Modifier.constrainAs(text) {
+            top.linkTo(button1.bottom, margin = 16.dp)
+            centerAround(button1.end)
+        })
+
+        val barrier = createEndBarrier(button1, text)
+        Button(
+            onClick = { /* Do something */ },
+            modifier = Modifier.constrainAs(button2) {
+                top.linkTo(parent.top, margin = 16.dp)
+                start.linkTo(barrier)
+            }
+        ) {
+            Text("Button 2")
         }
     }
 }
