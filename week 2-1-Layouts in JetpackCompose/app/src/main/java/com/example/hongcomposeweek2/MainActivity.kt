@@ -1,6 +1,7 @@
 package com.example.hongcomposeweek2
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
@@ -26,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
 import com.example.hongcomposeweek2.ui.theme.HongComposeWeek2Theme
 import kotlinx.coroutines.launch
@@ -41,7 +43,7 @@ class MainActivity : ComponentActivity() {
 //                    LayoutsCodelab()
 //                    ScrollingList()
 //                    Text("Hi there!", Modifier.firstBaselineToTop(32.dp))
-                    BodyContent2()
+                    BodyContentForMyOwnColumn()
                 }
             }
         }
@@ -49,15 +51,20 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun BodyContent2(modifier: Modifier = Modifier) {
+fun BodyContentForMyOwnColumn(modifier: Modifier = Modifier) {
     MyOwnColumn(modifier.padding(8.dp)) {
         Text("MyOwnColumn")
         Text("places items")
         Text("vertically.")
         Text("We've done it by hand!")
+        Text("We've done it by hand!")
+        Text("We've done it by hand!")
+        Text("Temp", fontSize = 100.sp)
     }
 }
 
+// measurable: child to be measured and placed // 여기서는 children.
+// constraints: minimum and maximum for the width and height of the child // 여기서는 각 child
 @Composable
 fun MyOwnColumn(
     modifier: Modifier = Modifier,
@@ -67,41 +74,39 @@ fun MyOwnColumn(
         modifier = modifier,
         content = content
     ) { measurables, constraints ->
-        val placeables = measurables.map { measurable ->
-            measurable.measure(constraints)
+        val placeables = measurables.map {
+            it.measure(constraints) // Measure each child
         }
 
-        // Track the y co-ord we have placed children up to
         var yPosition = 0
 
-        // Set the size of the layout as big as it can
+        // 현재로써는 maxWidth, maxHeight는 screenWidth, screenHeight가 되는듯 싶다.
+        // 이 범위 내에서 placeables를 그리겠다!
         layout(constraints.maxWidth, constraints.maxHeight) {
-            // Place children in the parent layout
             placeables.forEach { placeable ->
-                // Position item on the screen
+                Log.d("MasonTesting","constraints.maxWidth: ${constraints.maxWidth}")
+                Log.d("MasonTesting","constraints.maxHeight: ${constraints.maxHeight}")
                 placeable.placeRelative(x = 0, y = yPosition)
-
-                // Record the y co-ord placed up to
                 yPosition += placeable.height
             }
         }
     }
 }
 
+
+// measurable: child to be measured and placed
+// constraints: minimum and maximum for the width and height of the child
 fun Modifier.firstBaselineToTop(
     firstBaselineToTop: Dp
 ) = this.then(
-    layout { measurable, constraints ->
-        val placeable = measurable.measure(constraints)
-
-        // Check the composable has a first baseline
+    layout { measurable, constraints -> // TextWithPaddingToBaselinePreview() 기준 TextView가 measurable로 들어오는 것 같다.
+        val placeable = measurable.measure(constraints) // for placeRelative
         check(placeable[FirstBaseline] != AlignmentLine.Unspecified)
         val firstBaseline = placeable[FirstBaseline]
 
-        // Height of the composable with padding - first baseline
         val placeableY = firstBaselineToTop.roundToPx() - firstBaseline
         val height = placeable.height + placeableY
-        layout(placeable.width, height) {
+        layout(placeable.width, height) { // 크기 및 위치 조정
             placeable.placeRelative(0, placeableY)
         }
     }
@@ -184,14 +189,6 @@ fun PhotographerCard(modifier: Modifier = Modifier) {
     }
 }
 
-@Preview
-@Composable
-fun PhotographerCardPreview() {
-    HongComposeWeek2Theme {
-        PhotographerCard()
-    }
-}
-
 @Composable
 fun LayoutsCodelab() {
     Scaffold(
@@ -221,6 +218,30 @@ fun BodyContent(modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         Text(text = "Hi there")
         Text(text = "Thanks for going through the Layouts codelab")
+    }
+}
+
+@Preview
+@Composable
+fun TextWithPaddingToBaselinePreview() {
+    HongComposeWeek2Theme {
+        Text("Hi there!", Modifier.firstBaselineToTop(32.dp))
+    }
+}
+
+@Preview
+@Composable
+fun TextWithNormalPaddingPreview() {
+    HongComposeWeek2Theme {
+        Text("Hi there!", Modifier.padding(top = 32.dp))
+    }
+}
+
+@Preview
+@Composable
+fun PhotographerCardPreview() {
+    HongComposeWeek2Theme {
+        PhotographerCard()
     }
 }
 
