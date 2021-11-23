@@ -15,20 +15,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.AlignmentLine
-import androidx.compose.ui.layout.FirstBaseline
-import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.*
 import coil.compose.rememberImagePainter
 import com.example.hongcomposeweek2.ui.theme.HongComposeWeek2Theme
 import kotlinx.coroutines.launch
@@ -52,6 +48,41 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// How to create a modifier
+@Stable
+fun Modifier.padding(all: Dp) =
+    this.then(
+        PaddingModifier(start = all, top = all, end = all, bottom = all, rtlAware = true)
+    )
+
+class PaddingModifier(
+    val start: Dp = 0.dp,
+    val top: Dp = 0.dp,
+    val end: Dp = 0.dp,
+    val bottom: Dp = 0.dp,
+    val rtlAware: Boolean = false
+) : LayoutModifier {
+    override fun MeasureScope.measure(
+        measurable: Measurable,
+        constraints: Constraints
+    ): MeasureResult {
+        val horizontal = start.roundToPx() + end.roundToPx()
+        val vertical = top.roundToPx() + bottom.roundToPx()
+
+        val placeable = measurable.measure(constraints.offset(-horizontal, -vertical))
+
+        val width = constraints.constrainWidth(placeable.width + horizontal)
+        val height = constraints.constrainHeight(placeable.height + vertical)
+        return layout(width, height) {
+            if (rtlAware) {
+                placeable.placeRelative(start.roundToPx(), top.roundToPx())
+            } else {
+                placeable.place(start.roundToPx(), top.roundToPx())
+            }
+        }
+    }
+}
+
 val topics = listOf(
     "Arts & Crafts", "Beauty", "Books", "Business", "Comics", "Culinary",
     "Design", "Fashion", "Film", "History", "Maths", "Music", "People", "Philosophy",
@@ -62,18 +93,22 @@ val topics = listOf(
 @Composable
 fun BodyContent3(modifier: Modifier = Modifier) {
     // StaggeredGridLayout이 화면 밖으로 벗어나게 되므로, scrollable한 Row로 감싼다.
-    Row(modifier = modifier.horizontalScroll(rememberScrollState())) {
+    // chaining 순서를 조심하자!
+    //   - padding(16.dp).size(200.dp) -> Row는 232 * 232 / StaggeredGrid는 200 * 200
+    //   - size(200.dp).padding(16.dp) -> Row는 200 * 200 / StaggeredGrid는 168 * 168
+    Row(
+        modifier = modifier
+            .background(color = Color.LightGray)
+            .padding(16.dp)
+            .size(200.dp)
+            .horizontalScroll(rememberScrollState())
+    ) {
         StaggeredGridLayout {
             for (topic in topics) {
                 Chip(modifier = Modifier.padding(8.dp), text = topic)
             }
         }
     }
-//    StaggeredGridLayout(modifier = modifier) {
-//        for (topic in topics) {
-//            Chip(modifier = Modifier.padding(8.dp), text = topic)
-//        }
-//    }
 }
 
 @Composable
@@ -129,7 +164,7 @@ fun StaggeredGridLayout(
         // Y of each row, based on the height accumulation of previous rows
         val rowY = IntArray(rows) { 0 }
         for (i in 1 until rows) {
-            rowY[i] = rowY[i-1] + rowHeights[i-1]
+            rowY[i] = rowY[i - 1] + rowHeights[i - 1]
         }
 
         // Set the size of the parent layout
@@ -183,8 +218,8 @@ fun MyOwnColumn(
         // 이 범위 내에서 placeables를 그리겠다!
         layout(constraints.maxWidth, constraints.maxHeight) {
             placeables.forEach { placeable ->
-                Log.d("MasonTesting","constraints.maxWidth: ${constraints.maxWidth}")
-                Log.d("MasonTesting","constraints.maxHeight: ${constraints.maxHeight}")
+                Log.d("MasonTesting", "constraints.maxWidth: ${constraints.maxWidth}")
+                Log.d("MasonTesting", "constraints.maxHeight: ${constraints.maxHeight}")
                 placeable.placeRelative(x = 0, y = yPosition)
                 yPosition += placeable.height
             }
