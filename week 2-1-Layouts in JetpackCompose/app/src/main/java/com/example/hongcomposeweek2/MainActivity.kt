@@ -46,12 +46,41 @@ class MainActivity : ComponentActivity() {
 //                    BodyContentForMyOwnColumn()
 //                    BodyContent3()
 //                    ConstraintLayoutContent()
-                    LargeConstraintLayout()
+//                    LargeConstraintLayout()
+                    TwoTexts(text1 = "Hello", text2 = "World")
                 }
             }
         }
     }
 }
+
+@Composable
+fun TwoTexts(modifier: Modifier = Modifier, text1: String, text2: String) {
+    // IntrinsicSize.Min 을 이용해 child 들의 height 중 maximum 값을 가져오게 된다.
+    Row(modifier = modifier.height(IntrinsicSize.Min)) {
+        Text(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 4.dp)
+                .wrapContentWidth(Alignment.Start),
+            text = text1
+        )
+
+        Divider(color = Color.Black, modifier = Modifier
+            .fillMaxHeight()
+            .width(1.dp))
+
+        Text(
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 4.dp)
+                .wrapContentWidth(Alignment.End),
+
+            text = text2
+        )
+    }
+}
+
 
 @Composable
 fun DecoupledConstraintLayout() {
